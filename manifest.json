@@ -11,7 +11,7 @@
     "label": "Shapely",
     "commandId": "menuCommand",
     "shortcut": {
-      "mac": "Cmd+Ctrl+Shift+P",
+      "mac": "Cmd+Shift+P",
       "win": "Ctrl+Shift+P"
     }
   }]
