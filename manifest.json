@@ -1,0 +1,18 @@
+{
+  "id": "test_shapely",
+  "name": "Icon Plugin",
+  "version": "1.0.0",
+  "host": {
+    "app": "XD",
+    "minVersion": "13.0.0"
+  },
+  "uiEntryPoints": [{
+    "type": "menu",
+    "label": "Shapely",
+    "commandId": "menuCommand",
+    "shortcut": {
+      "mac": "Cmd+Ctrl+Shift+P",
+      "win": "Ctrl+Shift+P"
+    }
+  }]
+}
