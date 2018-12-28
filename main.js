@@ -261,10 +261,11 @@ async function createDialog(selection, id = "dialog") {
     const imageGrid = $("#image_grid");
     const searchInput = $("#search");
 
-    const submit = () => {
+    const submit = function (event) {
+        event.preventDefault();
 
-        console.log(selectedImageEntry.name);
         if (!selectedImageEntry) return;
+        console.log(selectedImageEntry.name);
 
         const newElement = new Rectangle(); // [3]
         newElement.width = 48;
@@ -280,6 +281,8 @@ async function createDialog(selection, id = "dialog") {
 
         if (isDialogClosingOnAdd)
             dialog.close();
+
+
     };
 
     $('.main-area').on('scroll', (async function () {
@@ -302,27 +305,27 @@ async function createDialog(selection, id = "dialog") {
     form.onsubmit = submit;
     cancel.onclick = () => dialog.close();
 
-    $("#icon_type_all").on('click', function(){
+    $("#icon_type_all").on('click', function () {
         onIconsTypeChanged();
         $("[id^=icon_type]").removeClass('active');
         $(this).addClass("active");
     });
-    $("#icon_type_material").on('click', function() {
+    $("#icon_type_material").on('click', function () {
         onIconsTypeChanged(C.ICON_TYPE.material);
         $("[id^=icon_type]").removeClass('active');
         $(this).addClass("active");
     });
-    $("#icon_type_open_iconic").on('click', function() {
+    $("#icon_type_open_iconic").on('click', function () {
         onIconsTypeChanged(C.ICON_TYPE.open_iconic);
         $("[id^=icon_type]").removeClass('active');
         $(this).addClass("active");
     });
-    $("#icon_type_nova").on('click', function(){
+    $("#icon_type_nova").on('click', function () {
         onIconsTypeChanged(C.ICON_TYPE.nova);
         $("[id^=icon_type]").removeClass('active');
         $(this).addClass("active");
     });
-    $("#icon_type_feather").on('click', function() {
+    $("#icon_type_feather").on('click', function () {
         onIconsTypeChanged(C.ICON_TYPE.feather);
         $("[id^=icon_type]").removeClass('active');
         $(this).addClass("active");
@@ -380,7 +383,7 @@ async function createDialog(selection, id = "dialog") {
         $("#checkbox_do_not_close_dialog").prop('checked', !isDialogClosingOnAdd);
 
         if (!!selectedIconType)
-            $("#icon_type_"+selectedIconType.type).addClass("active"); // todo not working
+            $("#icon_type_" + selectedIconType.type).addClass("active");
         else
             $("#icon_type_all").addClass("active");
 
