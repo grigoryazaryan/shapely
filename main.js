@@ -279,6 +279,9 @@ async function createDialog(selection, id = "dialog") {
         selection.insertionParent.addChild(newElement); // [4]
         newElement.moveInParentCoordinates(100, 100);
 
+        $('.mainContentSelected').removeClass('active')
+        selectedImageEntry = null;
+
         if (isDialogClosingOnAdd)
             dialog.close();
 
@@ -292,7 +295,6 @@ async function createDialog(selection, id = "dialog") {
         console.log(parent_div.scrollHeight, $(this).scrollTop(), offset);
         if ($(this).scrollTop() >= parent_div.scrollHeight - 300) { // bad style! why 300??
             if (isLoading) return;
-            console.log("load more")
             loadIcons(offset, PAGE_SIZE)
                 .then(results => drawResults(results))
         }
