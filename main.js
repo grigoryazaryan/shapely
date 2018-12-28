@@ -3,11 +3,16 @@ global.setTimeout = (fn) => fn;
 global.clearTimeout = (fn) => {
 }
 
+
 const ImageFill = require("scenegraph").ImageFill;
 const Utl = require("./Utils.js");
 const SVG = require("./svg.js");
 const $ = require("./jquery");
-const Cosnt = require("./Const");
+const C = require("./Const");
+const PAGE_SIZE = 15;
+
+let isDialogClosingOnAdd = true;
+let selectedIconType;
 
 const {
     Rectangle,
@@ -17,6 +22,7 @@ const {
 
 async function createDialog(selection, id = "dialog") {
     let selectedImageEntry;
+    let isLoading = false;
 
     const sel = `#${id}`;
     // let dialog = document.querySelector(sel);
@@ -194,22 +200,22 @@ async function createDialog(selection, id = "dialog") {
 
             <section id="icon_types" class="row wide">
             
-              <button id="icon_type_all" uxp-variant="secondary" uxp-quiet="true">ALL</button>
-              <button id="icon_type_material" uxp-variant="secondary" uxp-quiet="true" title="Material Icons and many more">Material</button>
-              <button id="icon_type_open_iconic" uxp-variant="secondary" uxp-quiet="true">Open Iconic</button>
-              <button id="icon_type_nova" uxp-variant="secondary" uxp-quiet="true">Nova</button>
-              <button id="icon_type_feather" uxp-variant="secondary" uxp-quiet="true">Feather</button>
+              <button id="icon_type_all" data-iconTypeButton="" uxp-variant="secondary" uxp-quiet="true">ALL</button>
+              <button id="icon_type_material" data-iconTypeButton="material" uxp-variant="secondary" uxp-quiet="true" title="Material Icons and many more">Material</button>
+              <button id="icon_type_open_iconic" data-iconTypeButton="open_iconic" uxp-variant="secondary" uxp-quiet="true">Open Iconic</button>
+              <button id="icon_type_nova" data-iconTypeButton="nova" uxp-variant="secondary" uxp-quiet="true">Nova</button>
+              <button id="icon_type_feather" data-iconTypeButton="feather" uxp-variant="secondary" uxp-quiet="true">Feather</button>
 
             </section>
 
             <!-- icons and shapes area -->
 
             <div class="main-area border-backgr">
-
-            <div id="image_grid" class="flex">
-
-
-            </div>
+            
+                <div id="image_grid" class="flex">
+    
+    
+                </div>
             </div>
 
 
@@ -230,7 +236,7 @@ async function createDialog(selection, id = "dialog") {
           <h3>Options</h3>
 
           <label class="row">
-            <input type="checkbox" />
+            <input type="checkbox" id="checkbox_do_not_close_dialog" />
             <span>Do not close the window on Add</span>
           </label>
           <hr class="small" />
@@ -249,16 +255,15 @@ async function createDialog(selection, id = "dialog") {
 
     $(document.body).append(dialog);
 
-    const [form, cancel, ok, search, icon_type_all, icon_type_material, icon_type_open_iconic, icon_type_nova, icon_type_feather] =
-        [`${sel} form`, "#cancel", "#ok", "#search", '#icon_type_all', '#icon_type_material',
-            '#icon_type_open_iconic', '#icon_type_nova', '#icon_type_feather'].map(s => document.querySelector(s));
+    const [form, cancel, ok] =
+        [`${sel} form`, "#cancel", "#ok"].map(s => document.querySelector(s));
 
-    const imageGrid = $("image_grid");
+    const imageGrid = $("#image_grid");
     const searchInput = $("#search");
 
     const submit = () => {
 
-        console.log(selectedImageEntry.name)
+        console.log(selectedImageEntry.name);
         if (!selectedImageEntry) return;
 
         const newElement = new Rectangle(); // [3]
@@ -273,77 +278,122 @@ async function createDialog(selection, id = "dialog") {
         selection.insertionParent.addChild(newElement); // [4]
         newElement.moveInParentCoordinates(100, 100);
 
-        dialog.close();
+        if (isDialogClosingOnAdd)
+            dialog.close();
     };
+
+    $('.main-area').on('scroll', (async function () {
+        let offset = imageGrid.children().length;
+        let parent_div = document.querySelector('.main-area');
+
+        console.log(parent_div.scrollHeight, $(this).scrollTop(), offset);
+        if ($(this).scrollTop() >= parent_div.scrollHeight - 300) { // bad style! why 300??
+            if (isLoading) return;
+            console.log("load more")
+            loadIcons(offset, PAGE_SIZE)
+                .then(results => drawResults(results))
+        }
+    }));
+
+    $("#checkbox_do_not_close_dialog").change(function () {
+        isDialogClosingOnAdd = !($(this).is(':checked'));
+    });
 
     form.onsubmit = submit;
     cancel.onclick = () => dialog.close();
 
+    $("#icon_type_all").on('click', function(){
+        onIconsTypeChanged();
+        $("[id^=icon_type]").removeClass('active');
+        $(this).addClass("active");
+    });
+    $("#icon_type_material").on('click', function() {
+        onIconsTypeChanged(C.ICON_TYPE.material);
+        $("[id^=icon_type]").removeClass('active');
+        $(this).addClass("active");
+    });
+    $("#icon_type_open_iconic").on('click', function() {
+        onIconsTypeChanged(C.ICON_TYPE.open_iconic);
+        $("[id^=icon_type]").removeClass('active');
+        $(this).addClass("active");
+    });
+    $("#icon_type_nova").on('click', function(){
+        onIconsTypeChanged(C.ICON_TYPE.nova);
+        $("[id^=icon_type]").removeClass('active');
+        $(this).addClass("active");
+    });
+    $("#icon_type_feather").on('click', function() {
+        onIconsTypeChanged(C.ICON_TYPE.feather);
+        $("[id^=icon_type]").removeClass('active');
+        $(this).addClass("active");
+    });
+
     function onIconsTypeChanged(iconType) {
-        loadImages(searchInput.val(), iconType)
-    };
+        selectedIconType = iconType;
+        loadIcons(0, PAGE_SIZE)
+            .then(drawResults);
+    }
 
     searchInput.on('input', () => {
-        loadImages(searchInput.val(),)
+        loadIcons(0, PAGE_SIZE)
+            .then(drawResults);
     });
 
-    imageGrid.scroll(function () {
-        console.log(imageGrid.height(), imageGrid.scrollTop())
-        // if ($(window). == $(document).height() - $(window).height()) {
-        //     // ajax call get data from server and append to the div
-        // }
-    });
-
-    async function loadImages(searchText, iconType) {
-        const image_grid = document.getElementById("image_grid");
-
-        image_grid.innerHTML = ''; // first clear all images
-
-        // const entries = await Utl.getLocalFiles('images');
-        const entries = await Utl.getLocalFiles('Icons/Material');
-        if (!iconType || iconType == "") {
-        }
-        // entries.filter(entry => entry.name.startsWith(searchText.trim()));
-
-        entries.forEach(entry => {
+    function drawResults(icons) {
+        for (let entry of icons) {
             // console.log(entry.name, entry.url);
 
-            let node = document.createElement("div");
             // let img_node = document.createElement("object");
             // img_node.setAttribute("data", entry.url);
             // img_node.setAttribute("type", "image/svg+xml");
 
-            node.innerHTML =
+            let node = $(
                 '<div class="mainContentSelected main-content">' +
-                '<img id="img" src="' + entry.url + '" class="icon-center" data-iconType="' + iconType + '">' +
+                '<img id="img" src="' + entry.url + '" class="icon-center" data-iconType="' + entry.iconType.type + '">' +
                 // '<object data="'+entry.url+'" type="image/svg+xml"></object>'+
-                '<h3>' + entry.name + '</h3></div>';
+                '<h3>' + entry.name + '</h3></div>');
 
-            node.addEventListener("click", function () {
-                let current = document.getElementsByClassName("active");
-                if (current.length > 0) {
-                    current[0].className = current[0].className.replace(" active", "");
-                }
-                this.className += " active";
+            imageGrid.append(node);
+
+            node.on('click', function () {
+                $('.mainContentSelected').removeClass('active');
+                node.addClass("active");
 
                 selectedImageEntry = entry; // save selected locally
             });
-
-            // node.appendChild(img_node);
-            image_grid.appendChild(node);
             // var draw = SVG('drawing').use('img', entry.url)
 
-        });
-
+        }
+        isLoading = false;
 
     }
 
-    (async function () {
-        await loadImages();
-    })();
+    async function loadIcons(offset, limit) {
+        isLoading = true;
+        if (offset == 0)
+            imageGrid.empty(); // first clear all images
+
+        return await Utl.loadIcons(offset, limit, searchInput.val(), selectedIconType);
+    }
+
+    function init() {
+        $("#checkbox_do_not_close_dialog").prop('checked', !isDialogClosingOnAdd);
+
+        if (!!selectedIconType)
+            $("#icon_type_"+selectedIconType.type).addClass("active"); // todo not working
+        else
+            $("#icon_type_all").addClass("active");
+
+        loadIcons(0, PAGE_SIZE)
+            .then(drawResults);
+
+    }
+
+    init();
 
     return dialog;
 }
+
 
 async function menuCommand(selection) {
 
